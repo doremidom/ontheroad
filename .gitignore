@@ -1,0 +1,4 @@
+config.json
+updatetracker.json
+*.pyc
+.DS_Store
