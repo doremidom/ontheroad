@@ -2,6 +2,7 @@ import json
 
 import emoji
 import requests
+import tweepy
 
 # import location_parser
 
@@ -52,6 +53,8 @@ def tracker_update(user, site, update_info):
         json.dump(info, f, indent=4)
 
 def tweet_text(data, site, user):
+    tweet = ""
+
     if user == "doremidom":
         person = "Dominique"
     else:
@@ -61,14 +64,14 @@ def tweet_text(data, site, user):
         url = data["link"]
         tweet = person + " just posted a new picture from the road! " + url
         print(tweet)
-        return tweet
+        # return tweet
     elif site == "lastfm":
         song = data[0]
         artist = data[1]
         tweet = ':musical_note:' + ' Currently listening to ' + song + " by " + artist
         tweet = emoji.emojize(tweet)
         print(tweet)
-        return tweet
+        # return tweet
     elif site == "location":
         tweet = "Last spotted on the road"
         # location = data["location"] if "location" in data else ""
@@ -76,7 +79,24 @@ def tweet_text(data, site, user):
         if len(location) > 0:
             tweet = "Last spotted in {}".format(location)
         print(tweet)
-        return tweet
+        # return tweet
+
+    # Post the tweet
+    cfg = get_config_json("config.json") # TODO: pass this in as an argument
+    cfg_twitter = cfg["twitter"]
+    consumer_key = cfg_twitter["consumer_key"]
+    consumer_secret = cfg_twitter["consumer_secret"]
+    access_key = cfg_twitter["access_key"]
+    access_secret = cfg_twitter["access_secret"]
+
+    resp = {"id": "FAILED"}
+    auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+    auth.set_access_token(access_key, access_secret)
+    api = tweepy.API(auth)
+
+    resp = api.update_status(tweet)
+    print(resp.id)
+
 
 # Retrieve JSON object with all config properties
 def get_config_json(config_path):

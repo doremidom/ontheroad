@@ -4,6 +4,7 @@ import requests
 import datetime
 import time
 import emoji
+import sys
 
 from shared_functions import *
 import location_parser
@@ -18,7 +19,6 @@ def instagram_last_updated(data):
 
 def item_changed(item_info, tracker_info, site):
 	if site == "instagram":
-		print("{} vs. {}".format(item_info, tracker_info))
 		return True if int(item_info) > int(tracker_info) else False
 	elif site == "lastfm" or site == "location":
 		return True if item_info != tracker_info else False
@@ -49,42 +49,42 @@ def location_updater(loc_curr, loc_prev, user):
 	else:
 		print("no location update currently for " + user)
 
-def updater():
-	sites = ["instagram", "lastfm", "location"]
+def updater(site):
+	# sites = ["instagram", "lastfm", "location"]
 
 	cfg = get_config_json("config.json")
 	ig_usernames = cfg["instagram"]["usernames"]
 	lfm_usernames = cfg["lastfm"]["usernames"]
 	loc_usernames = cfg["location"]["usernames"]
 
-	for site in sites:
+	# for site in sites:
+	if site == "instagram":
+		users = ig_usernames
+	if site == "lastfm":
+		users = lfm_usernames
+	if site == "location":
+		users = loc_usernames
+
+	for user in users:
+		data = {}
 		if site == "instagram":
-			users = ig_usernames
-		if site == "lastfm":
-			users = lfm_usernames
-		if site == "location":
-			users = loc_usernames
+			data = json_to_hash(site, user, "no api key necessary")
+		elif site == "lastfm":
+			data = json_to_hash(site, user, cfg["lastfm"]["api_key"])
+		elif site == "location":
+			data = location_parser.get_location_hash(cfg)
+		# else:
+		# 	data = json_to_hash(site, user)
 
-		for user in users:
-			data = {}
-			if site == "instagram":
-				data = json_to_hash(site, user, "no api key necessary")
-			elif site == "lastfm":
-				data = json_to_hash(site, user, cfg["lastfm"]["api_key"])
-			elif site == "location":
-				data = location_parser.get_location_hash(cfg)
-			# else:
-			# 	data = json_to_hash(site, user)
+		latest_item = last_item(site, data)
+		tracker_info = tracker_last_updated(user, site)
 
-			latest_item = last_item(site, data)
-			tracker_info = tracker_last_updated(user, site)
-
-			if site == "instagram":
-				instagram_updater(latest_item, tracker_info, user)
-			elif site == "lastfm":
-				lastfm_updater(latest_item, user, tracker_info)
-			elif site == "location":
-				location_updater(latest_item, tracker_info, user)
+		if site == "instagram":
+			instagram_updater(latest_item, tracker_info, user)
+		elif site == "lastfm":
+			lastfm_updater(latest_item, user, tracker_info)
+		elif site == "location":
+			location_updater(latest_item, tracker_info, user)
 			
 #######LASTFM FUNCTIONS#######
 
@@ -92,4 +92,5 @@ def updater():
 
 # MAIN
 if __name__ == "__main__":
-	updater()
+	site = sys.argv[1]
+	updater(site)
