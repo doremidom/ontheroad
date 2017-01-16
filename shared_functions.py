@@ -70,7 +70,7 @@ def tweet_text(data, site, user):
         artist = data[1]
         tweet = ':musical_note:' + ' Currently listening to ' + song + " by " + artist
         tweet = emoji.emojize(tweet)
-        print(tweet)
+        print(tweet.encode("utf-8"))
         # return tweet
     elif site == "location":
         tweet = "Last spotted on the road"
