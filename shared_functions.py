@@ -101,7 +101,7 @@ def tweet_text(data, site, user, photo_filepath=""):
 
         if photo_filepath != "":
             resp = api.update_with_media(photo_filepath.encode("utf-8"), status=tweet.encode("utf-8"))
-            print("location photo:" + photo_filepath)
+            print("location photo found! it's at " + photo_filepath)
             print(resp.id)
         else:
             resp = api.update_status(tweet)

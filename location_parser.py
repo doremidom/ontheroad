@@ -17,6 +17,7 @@ from shared_functions import *
 # Get location hash given a config JSON file. A pretty close replica of the main method
 def get_location_hash(config_json):    
     coordinates = get_location_coordinates(config_json)
+    # coordinates = generate_random_coordinates() # TESTING
     locality, photo_refs = get_location_name_and_photo_references(coordinates, config_json)
     return {"location":locality, "photo_references":photo_refs}
 
@@ -95,7 +96,9 @@ def get_location_name_and_photo_references(coordinates, config_json):
         }
         r = requests.get(url_details, params=params_details)
         resp_obj = json.loads(r.content) if r.ok else {}
-        # print(resp_obj)
+        print("resp_obj:\n====")
+        print(resp_obj)
+        print("====")
 
         # Parse address components to try to find a locality
         address_components = resp_obj["result"]["address_components"] if ("result" in resp_obj and "address_components" in resp_obj["result"]) else []
