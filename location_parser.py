@@ -17,8 +17,8 @@ from shared_functions import *
 # Get location hash given a config JSON file. A pretty close replica of the main method
 def get_location_hash(config_json):    
     coordinates = get_location_coordinates(config_json)
-    locality = get_location_locality_and_state(coordinates, config_json)
-    return {"location":locality}
+    locality, photo_refs = get_location_name_and_photo_references(coordinates, config_json)
+    return {"location":locality, "photo_references":photo_refs}
 
 # Create a Twitter-worthy message about our location
 def construct_locality_message(locality):
@@ -27,14 +27,40 @@ def construct_locality_message(locality):
     else:
         return "Currently on the road"
 
+def save_location_photo(name, data):
+    config_json = get_config_json("config.json") # TODO: pass this in as an argument
+    photo_refs = data["photo_references"]
+    config_places = config_json["google_places"]
+    endpoint = config_places["api_endpoint"]
+    url = endpoint + "photo"
+    photo_filepath = config_json["location"]["photo_filepath"]
+
+    for photo_ref in photo_refs:
+        print("photo_ref: " + photo_ref)
+        params = {
+            "key": config_places["api_key"],
+            "maxwidth": 600, # px
+            "photoreference": photo_ref
+        }
+        r = requests.get(url, params=params, stream=True)
+        if r.status_code == 200:
+            with open(photo_filepath, "wb") as f:
+                for chunk in r:
+                    f.write(chunk)
+            return photo_filepath
+
+    return ""
+
+
 # def save_location_to_tracker(location, tracker_path):
 #     with open(tracker_path, "r"):
 
 # Find the city and state given a lat/lng pair, based on Google Places API
-def get_location_locality_and_state(coordinates, config_json):
+def get_location_name_and_photo_references(coordinates, config_json):
     locality = ""
     state = ""
     place_ids = []
+    photo_refs = []
 
     # Retrieve nearby places using Nearby Search
     config_places = config_json["google_places"]
@@ -69,6 +95,7 @@ def get_location_locality_and_state(coordinates, config_json):
         }
         r = requests.get(url_details, params=params_details)
         resp_obj = json.loads(r.content) if r.ok else {}
+        # print(resp_obj)
 
         # Parse address components to try to find a locality
         address_components = resp_obj["result"]["address_components"] if ("result" in resp_obj and "address_components" in resp_obj["result"]) else []
@@ -92,11 +119,17 @@ def get_location_locality_and_state(coordinates, config_json):
                         locality = address_component["long_name"]
                         is_state_found = True
 
+        # Get photo references
+        if "result" in resp_obj and "photos" in resp_obj["result"]:
+            photo_refs = [photo["photo_reference"] for photo in resp_obj["result"]["photos"]]
+        else:
+            print("please no photos")
+
     # Append state to locality if we've found it
     if is_locality_found and is_state_found:
         locality = "{}, {}".format(locality, state)
     
-    return locality
+    return (locality, photo_refs)
 
 # Returns a boolean based on whether address type matches match type
 def is_address_type_match(address_type, match_type):

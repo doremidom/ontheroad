@@ -23,7 +23,7 @@ def item_changed(item_info, tracker_info, site):
 	elif site == "lastfm" or site == "location":
 		return True if item_info != tracker_info else False
 
-def instagram_updater(latest_item, tracker_time, user):
+def instagram_updater(latest_item, tracker_time, user, data):
 	item_time = instagram_last_updated(latest_item)
 	if item_changed(item_time, tracker_time, "instagram"):
 		tracker_update(user, "instagram", item_time)
@@ -31,7 +31,7 @@ def instagram_updater(latest_item, tracker_time, user):
 	else:
 		print("no instagram update currently for " + user)
 
-def lastfm_updater(data, user, tracker_song):
+def lastfm_updater(data, user, tracker_song, data_hash):
 	current_song = data["name"]
 	current_artist = data["artist"]["#text"]
 	full_info = [current_song, current_artist]
@@ -42,10 +42,11 @@ def lastfm_updater(data, user, tracker_song):
 	else:
 		print("no lastfm update currently for " + user)
 
-def location_updater(loc_curr, loc_prev, user):
+def location_updater(loc_curr, loc_prev, user, data):
 	if item_changed(loc_curr, loc_prev, "location"):
 		tracker_update(user, "location", loc_curr)
-		tweet_text(loc_curr, "location", user)
+		photo_filepath = location_parser.save_location_photo(loc_curr, data)
+		tweet_text(loc_curr, "location", user, photo_filepath)
 	else:
 		print("no location update currently for " + user)
 
@@ -80,11 +81,11 @@ def updater(site):
 		tracker_info = tracker_last_updated(user, site)
 
 		if site == "instagram":
-			instagram_updater(latest_item, tracker_info, user)
+			instagram_updater(latest_item, tracker_info, user, data)
 		elif site == "lastfm":
-			lastfm_updater(latest_item, user, tracker_info)
+			lastfm_updater(latest_item, user, tracker_info, data)
 		elif site == "location":
-			location_updater(latest_item, tracker_info, user)
+			location_updater(latest_item, tracker_info, user, data)
 			
 #######LASTFM FUNCTIONS#######
 

@@ -52,7 +52,7 @@ def tracker_update(user, site, update_info):
     with open("updatetracker.json", "w") as f:
         json.dump(info, f, indent=4)
 
-def tweet_text(data, site, user):
+def tweet_text(data, site, user, photo_filepath=""):
     tweet = ""
 
     if user == "doremidom":
@@ -60,28 +60,7 @@ def tweet_text(data, site, user):
     else:
         person = "David"
 
-    if site == "instagram":
-        url = data["link"]
-        tweet = person + " just posted a new picture from the road! " + url
-        print(tweet)
-        # return tweet
-    elif site == "lastfm":
-        song = data[0]
-        artist = data[1]
-        tweet = ':musical_note:' + ' Currently listening to ' + song + " by " + artist
-        tweet = emoji.emojize(tweet)
-        print(tweet.encode("utf-8"))
-        # return tweet
-    elif site == "location":
-        tweet = "Last spotted on the road"
-        # location = data["location"] if "location" in data else ""
-        location = data
-        if len(location) > 0:
-            tweet = "Last spotted in {}".format(location)
-        print(tweet)
-        # return tweet
-
-    # Post the tweet
+    # Twitter API authentication
     cfg = get_config_json("config.json") # TODO: pass this in as an argument
     cfg_twitter = cfg["twitter"]
     consumer_key = cfg_twitter["consumer_key"]
@@ -94,8 +73,41 @@ def tweet_text(data, site, user):
     auth.set_access_token(access_key, access_secret)
     api = tweepy.API(auth)
 
-    resp = api.update_status(tweet)
-    print(resp.id)
+    if site == "instagram":
+        url = data["link"]
+        tweet = person + " just posted a new picture from the road! " + url
+        print(tweet)
+        resp = api.update_status(tweet)
+        print(resp.id)
+        # return tweet
+    elif site == "lastfm":
+        song = data[0]
+        artist = data[1]
+        tweet = ':musical_note:' + ' Currently listening to ' + song + " by " + artist
+        tweet = emoji.emojize(tweet)
+        print(tweet.encode("utf-8"))
+        resp = api.update_status(tweet)
+        print(resp.id)
+        # return tweet
+    elif site == "location":
+        tweet = "Last spotted on the road"
+        # location = data["location"] if "location" in data else ""
+        location = data
+        print(data)
+        if len(location) > 0:
+            tweet = "Last spotted in {}".format(location)
+        print(tweet)
+        print("photo_filepath: " + photo_filepath)
+
+        if photo_filepath != "":
+            resp = api.update_with_media(photo_filepath.encode("utf-8"), status=tweet.encode("utf-8"))
+            print("location photo:" + photo_filepath)
+            print(resp.id)
+        else:
+            resp = api.update_status(tweet)
+            print(resp.id)
+
+        # return tweet
 
 
 # Retrieve JSON object with all config properties
@@ -104,3 +116,6 @@ def get_config_json(config_path):
     with open(config_path, "r") as f:
         config_json = json.loads(f.read())
     return config_json
+
+# Retrieve
+# def get_location_photo(data):
